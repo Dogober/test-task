@@ -40,11 +40,11 @@ export class CanvasState {
     }
 
     onClick(event: any){
-        if(this.drawingState == LineDrawingState.DRAWING_FIRST_POINT){
+        if(this.drawingState === LineDrawingState.DRAWING_FIRST_POINT){
             this.drawingState = LineDrawingState.DRAWING_SECOND_POINT
             this.firstX = event.pageX - event.target.offsetLeft
             this.firstY = event.pageY - event.target.offsetTop
-        } else if(this.drawingState == LineDrawingState.DRAWING_SECOND_POINT){
+        } else if(this.drawingState === LineDrawingState.DRAWING_SECOND_POINT){
             this.drawingState = LineDrawingState.DRAWING_FIRST_POINT
             this.lines?.push({
                 firstPoint: {
@@ -60,14 +60,31 @@ export class CanvasState {
 
     }
     mouseMoveHandler(event: any){
-        if(this.drawingState == LineDrawingState.DRAWING_SECOND_POINT){
+        if(this.drawingState === LineDrawingState.DRAWING_SECOND_POINT){
             this.secondX = event.pageX - event.target.offsetLeft
             this.secondY = event.pageY - event.target.offsetTop
-            this.ctx?.clearRect(0, 0, 800, 500)
+            this.ctx?.clearRect(0, 0, this.canvas?.clientWidth!, this.canvas?.clientHeight!)
             this.ctx?.beginPath()
             this.ctx?.moveTo(this.firstX!, this.firstY!)
             this.ctx?.lineTo(this.secondX, this.secondY)
             this.ctx?.stroke()
+            if (this.lines.length >= 1) {
+                let firstX = this.lines[0].firstPoint.x!
+                let secondX = this.lines[0].secondPoint.x!
+                let firstY = this.lines[0].firstPoint.y!
+                let secondY = this.lines[0].secondPoint.y!
+                let divisor = ((this.secondY-this.firstY!)*(secondX-firstX)-(this.secondX-this.firstX!)*(secondY-firstY))
+                let factorA = ((this.secondX-this.firstX!)*(firstY-this.firstY!)-(this.secondY-this.firstY!)*(firstX-this.firstX!))/divisor
+                let factorB = ((secondX-firstX)*(firstY-this.firstY!)-(secondY-firstY)*(firstX-this.firstX!))/divisor
+                let xIntersectionPoint, yIntersectionPoint
+                if (factorA >= 0 && factorA <= 1 && factorB >= 0 && factorB <= 1) {
+                    xIntersectionPoint = Math.round(firstX+factorA*(secondX-firstX))
+                    yIntersectionPoint = Math.round(firstY+factorA*(secondY-firstY))
+                    this.ctx?.beginPath()
+                    this.ctx?.arc(xIntersectionPoint, yIntersectionPoint, 5, 0, Math.PI * 2, true)
+                    this.ctx?.fill()
+                }
+            }
             for (let i = 0; i < this.lines.length; i++) {
                 this.ctx?.beginPath()
                 this.ctx?.moveTo(this.lines[i].firstPoint.x!, this.lines[i].firstPoint.y!)
