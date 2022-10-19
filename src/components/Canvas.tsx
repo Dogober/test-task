@@ -19,7 +19,12 @@ const Canvas: FC = observer(() => {
                 height={500}
                 ref={canvasRef}
             />
-            <button className='collapse'>Collapse lines</button>
+            <button
+                onClick={() => canvasState.clearCanvas()}
+                className='collapse'
+            >
+                Collapse lines
+            </button>
         </div>
     );
 });
