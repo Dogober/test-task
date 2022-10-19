@@ -25,6 +25,7 @@ export class CanvasState {
     secondY?: number;
     drawingState = LineDrawingState.DRAWING_FIRST_POINT
     lines: Line[] = []
+    intersectionPoints: Point[] = []
 
     constructor(){
         makeAutoObservable(this)
@@ -55,7 +56,14 @@ export class CanvasState {
                     x: this.secondX,
                     y: this.secondY
                 }
-            })        
+            })
+            for (let i = 0; i < this.lines?.length; i++) {
+                this.intersectionPoints?.push({
+                    x: this.findIntersectionPoints(this.lines[i], this.lines[this.lines?.length-1])?.x,
+                    y: this.findIntersectionPoints(this.lines[i], this.lines[this.lines?.length-1])?.y
+                })  
+            }
+            
         }
 
     }
@@ -68,21 +76,14 @@ export class CanvasState {
             this.ctx?.moveTo(this.firstX!, this.firstY!)
             this.ctx?.lineTo(this.secondX, this.secondY)
             this.ctx?.stroke()
-            if (this.lines.length >= 1) {
-                let firstX = this.lines[0].firstPoint.x!
-                let secondX = this.lines[0].secondPoint.x!
-                let firstY = this.lines[0].firstPoint.y!
-                let secondY = this.lines[0].secondPoint.y!
-                let divisor = ((this.secondY-this.firstY!)*(secondX-firstX)-(this.secondX-this.firstX!)*(secondY-firstY))
-                let factorA = ((this.secondX-this.firstX!)*(firstY-this.firstY!)-(this.secondY-this.firstY!)*(firstX-this.firstX!))/divisor
-                let factorB = ((secondX-firstX)*(firstY-this.firstY!)-(secondY-firstY)*(firstX-this.firstX!))/divisor
-                let xIntersectionPoint, yIntersectionPoint
-                if (factorA >= 0 && factorA <= 1 && factorB >= 0 && factorB <= 1) {
-                    xIntersectionPoint = Math.round(firstX+factorA*(secondX-firstX))
-                    yIntersectionPoint = Math.round(firstY+factorA*(secondY-firstY))
-                    this.ctx?.beginPath()
-                    this.ctx?.arc(xIntersectionPoint, yIntersectionPoint, 5, 0, Math.PI * 2, true)
-                    this.ctx?.fill()
+            let lastLineDrawn: Line = {
+                firstPoint: {
+                    x: this.firstX!,
+                    y: this.firstY!
+                },
+                secondPoint: {
+                    x: this.secondX,
+                    y: this.secondY
                 }
             }
             for (let i = 0; i < this.lines.length; i++) {
@@ -90,12 +91,36 @@ export class CanvasState {
                 this.ctx?.moveTo(this.lines[i].firstPoint.x!, this.lines[i].firstPoint.y!)
                 this.ctx?.lineTo(this.lines[i].secondPoint.x!, this.lines[i].secondPoint.y!)
                 this.ctx?.stroke()
+                this.ctx?.beginPath()
+                this.ctx?.arc(this.findIntersectionPoints(this.lines[i], lastLineDrawn)?.x!, this.findIntersectionPoints(this.lines[i], lastLineDrawn)?.y!, 5, 0, Math.PI * 2, true)
+                this.ctx!.fillStyle = 'red'
+                this.ctx?.fill() 
             }
+            for (let i = 0; i < this.intersectionPoints.length; i++) {
+                if (this.intersectionPoints[i].x && this.intersectionPoints[i].y) {
+                    this.ctx?.beginPath()
+                    this.ctx?.arc(this.intersectionPoints[i].x!, this.intersectionPoints[i].y!, 5, 0, Math.PI * 2, true)
+                    this.ctx?.fill()     
+                }
+            }
+        }
+    }
+    findIntersectionPoints(drawnLine: Line, lastLineDrawn: Line){
+        let divisor = ((lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)-(lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
+        let factorA = ((lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
+        let factorB = ((drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
+        let circlePoints: Point = {
+            x: Math.round(drawnLine.firstPoint.x!+factorA*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)),
+            y: Math.round(drawnLine.firstPoint.y!+factorA*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
+        }
+        if (factorA >= 0 && factorA <= 1 && factorB >= 0 && factorB <= 1) {
+            return circlePoints
         }
     }
     clearCanvas(){
         this.ctx?.clearRect(0, 0, 800, 500)
         this.lines = []
+        this.intersectionPoints = []
     }
 }
 
