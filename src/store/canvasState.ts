@@ -16,7 +16,7 @@ interface Point {
 }
 
 export class CanvasState {
-
+    
     canvas?: canvas
     ctx?: CanvasRenderingContext2D | null
     firstX?: number;
@@ -25,7 +25,6 @@ export class CanvasState {
     secondY?: number;
     drawingState = LineDrawingState.DRAWING_FIRST_POINT
     lines: Line[] = []
-    intersectionPoints: Point[] = []
     lineAdded: boolean = false
 
     constructor(){
@@ -49,16 +48,6 @@ export class CanvasState {
         } else if(this.drawingState === LineDrawingState.DRAWING_SECOND_POINT){
             this.drawingState = LineDrawingState.DRAWING_FIRST_POINT
             this.lineAdded = false
-            for (let i = 0; i < this.lines?.length; i++) {
-                let inetractionPoint = this.findIntersectionPoints(this.lines[i], this.lines[this.lines?.length-1])
-                if (inetractionPoint) {
-                    this.intersectionPoints?.push({
-                        x: inetractionPoint?.x,
-                        y: inetractionPoint?.y
-                    })
-                }
-            }
-            console.log(this.lines.length)
         }
     }
     mouseMoveHandler(event: any){
@@ -77,27 +66,26 @@ export class CanvasState {
                 }
             }
             if (!this.lineAdded) {
-                this.lineAdded = true
                 this.lines.push(lastLineDrawn)
+                this.lineAdded = true
             } else {
                 this.lines[this.lines.length-1] = lastLineDrawn
             }
             for (let i = 0; i < this.lines.length; i++) {
-                let inetractionPoint = this.findIntersectionPoints(this.lines[i], lastLineDrawn)
                 this.ctx?.beginPath()
                 this.ctx?.moveTo(this.lines[i].firstPoint.x!, this.lines[i].firstPoint.y!)
                 this.ctx?.lineTo(this.lines[i].secondPoint.x!, this.lines[i].secondPoint.y!)
                 this.ctx?.stroke()
-                this.ctx?.beginPath()
-                this.ctx?.arc(inetractionPoint?.x!, inetractionPoint?.y!, 5, 0, Math.PI * 2, true)
-                this.ctx!.fillStyle = 'red'
-                this.ctx?.fill() 
+                for (let j = 0; j < this.lines.length; j++) {
+                    let inetrsactionPoint = this.findIntersectionPoints(this.lines[i], this.lines[j])
+                    if (inetrsactionPoint) {
+                        this.ctx?.beginPath()
+                        this.ctx?.arc(inetrsactionPoint?.x!, inetrsactionPoint?.y!, 5, 0, Math.PI * 2, true)
+                        this.ctx!.fillStyle = 'red'
+                        this.ctx?.fill()         
+                    }
+                }
             }  
-            for (let i = 0; i < this.intersectionPoints.length; i++) {
-                this.ctx?.beginPath()
-                this.ctx?.arc(this.intersectionPoints[i].x!, this.intersectionPoints[i].y!, 5, 0, Math.PI * 2, true)
-                this.ctx?.fill()
-            }
         }
     }
     findIntersectionPoints(drawnLine: Line, lastLineDrawn: Line){
@@ -116,7 +104,6 @@ export class CanvasState {
     clearCanvas(){
         this.ctx?.clearRect(0, 0, 800, 500)
         this.lines = []
-        this.intersectionPoints = []
     }
 }
 
