@@ -26,6 +26,7 @@ export class CanvasState {
     drawingState = LineDrawingState.DRAWING_FIRST_POINT
     lines: Line[] = []
     intersectionPoints: Point[] = []
+    lineAdded: boolean = false
 
     constructor(){
         makeAutoObservable(this)
@@ -47,35 +48,24 @@ export class CanvasState {
             this.firstY = event.pageY - event.target.offsetTop
         } else if(this.drawingState === LineDrawingState.DRAWING_SECOND_POINT){
             this.drawingState = LineDrawingState.DRAWING_FIRST_POINT
-            this.lines?.push({
-                firstPoint: {
-                    x: this.firstX,
-                    y: this.firstY
-                },
-                secondPoint: {
-                    x: this.secondX,
-                    y: this.secondY
-                }
-            })
+            this.lineAdded = false
             for (let i = 0; i < this.lines?.length; i++) {
-                this.intersectionPoints?.push({
-                    x: this.findIntersectionPoints(this.lines[i], this.lines[this.lines?.length-1])?.x,
-                    y: this.findIntersectionPoints(this.lines[i], this.lines[this.lines?.length-1])?.y
-                })  
+                let inetractionPoint = this.findIntersectionPoints(this.lines[i], this.lines[this.lines?.length-1])
+                if (inetractionPoint) {
+                    this.intersectionPoints?.push({
+                        x: inetractionPoint?.x,
+                        y: inetractionPoint?.y
+                    })
+                }
             }
-            
+            console.log(this.lines.length)
         }
-
     }
     mouseMoveHandler(event: any){
         if(this.drawingState === LineDrawingState.DRAWING_SECOND_POINT){
             this.secondX = event.pageX - event.target.offsetLeft
             this.secondY = event.pageY - event.target.offsetTop
             this.ctx?.clearRect(0, 0, this.canvas?.clientWidth!, this.canvas?.clientHeight!)
-            this.ctx?.beginPath()
-            this.ctx?.moveTo(this.firstX!, this.firstY!)
-            this.ctx?.lineTo(this.secondX, this.secondY)
-            this.ctx?.stroke()
             let lastLineDrawn: Line = {
                 firstPoint: {
                     x: this.firstX!,
@@ -86,22 +76,27 @@ export class CanvasState {
                     y: this.secondY
                 }
             }
+            if (!this.lineAdded) {
+                this.lineAdded = true
+                this.lines.push(lastLineDrawn)
+            } else {
+                this.lines[this.lines.length-1] = lastLineDrawn
+            }
             for (let i = 0; i < this.lines.length; i++) {
+                let inetractionPoint = this.findIntersectionPoints(this.lines[i], lastLineDrawn)
                 this.ctx?.beginPath()
                 this.ctx?.moveTo(this.lines[i].firstPoint.x!, this.lines[i].firstPoint.y!)
                 this.ctx?.lineTo(this.lines[i].secondPoint.x!, this.lines[i].secondPoint.y!)
                 this.ctx?.stroke()
                 this.ctx?.beginPath()
-                this.ctx?.arc(this.findIntersectionPoints(this.lines[i], lastLineDrawn)?.x!, this.findIntersectionPoints(this.lines[i], lastLineDrawn)?.y!, 5, 0, Math.PI * 2, true)
+                this.ctx?.arc(inetractionPoint?.x!, inetractionPoint?.y!, 5, 0, Math.PI * 2, true)
                 this.ctx!.fillStyle = 'red'
                 this.ctx?.fill() 
-            }
+            }  
             for (let i = 0; i < this.intersectionPoints.length; i++) {
-                if (this.intersectionPoints[i].x && this.intersectionPoints[i].y) {
-                    this.ctx?.beginPath()
-                    this.ctx?.arc(this.intersectionPoints[i].x!, this.intersectionPoints[i].y!, 5, 0, Math.PI * 2, true)
-                    this.ctx?.fill()     
-                }
+                this.ctx?.beginPath()
+                this.ctx?.arc(this.intersectionPoints[i].x!, this.intersectionPoints[i].y!, 5, 0, Math.PI * 2, true)
+                this.ctx?.fill()
             }
         }
     }
@@ -117,6 +112,7 @@ export class CanvasState {
             return circlePoints
         }
     }
+
     clearCanvas(){
         this.ctx?.clearRect(0, 0, 800, 500)
         this.lines = []
