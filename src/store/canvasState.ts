@@ -122,7 +122,7 @@ export class CanvasState {
         return decreasedLine
     }
     
-    findIntersectionPoints(drawnLine: Line, lastLineDrawn: Line): Point | undefined{
+    findIntersectionPoint(drawnLine: Line, lastLineDrawn: Line): Point | undefined{
         let divisor = ((lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)-(lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
         let factorA = ((lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
         let factorB = ((drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
@@ -141,7 +141,7 @@ export class CanvasState {
         this.ctx?.lineTo(line.secondPoint.x!, line.secondPoint.y!)
         this.ctx?.stroke()    
     }
-    
+
     drawCircle(point: Point){
         this.ctx?.beginPath()
         this.ctx?.arc(point.x!, point.y!, 5, 0, Math.PI * 2, true)
@@ -153,7 +153,7 @@ export class CanvasState {
         for (let i = 0; i < lines.length; i++) {
             this.drawLine(lines[i])   
             for (let j = 0; j < this.lines.length; j++) {
-                let inetrsactionPoint = this.findIntersectionPoints(lines[i], this.lines[j])
+                let inetrsactionPoint = this.findIntersectionPoint(lines[i], this.lines[j])
                 if (inetrsactionPoint) {
                     this.drawCircle(inetrsactionPoint)
                 }
