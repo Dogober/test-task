@@ -101,13 +101,13 @@ export class CanvasState {
                 this.lines[i] = this.decreasedLine(this.lines[i])
             }
             this.drawAll(this.lines)
-        }, 0)    
+        }, 20)    
     }
 
     decreasedLine(line: Line): Line{
         let deltaX = Math.round(line.firstPoint.x!-line.secondPoint.x!)
         let deltaY = Math.round(line.firstPoint.y!-line.secondPoint.y!)
-        const animationTick = 30
+        const animationTick = 100
         const count = this.animationDuration/animationTick
         let decreasedLine: Line = {
             firstPoint: {
