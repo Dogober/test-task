@@ -109,7 +109,7 @@ export class CanvasState {
         let deltaY = Math.round(line.firstPoint.y!-line.secondPoint.y!)
         const animationTick = 30
         const count = this.animationDuration/animationTick
-        let animatedline: Line = {
+        let decreasedLine: Line = {
             firstPoint: {
                 x: line.firstPoint.x!-deltaX/(2*count),
                 y: line.firstPoint.y!-deltaY/(2*count)    
@@ -119,7 +119,7 @@ export class CanvasState {
                 y: line.secondPoint.y!+deltaY/(2*count)    
             }
         }
-        return animatedline
+        return decreasedLine
     }
     
     findIntersectionPoints(drawnLine: Line, lastLineDrawn: Line): Point | undefined{
@@ -135,19 +135,27 @@ export class CanvasState {
         }
     }
 
+    drawLine(line: Line){
+        this.ctx?.beginPath()
+        this.ctx?.moveTo(line.firstPoint.x!, line.firstPoint.y!)
+        this.ctx?.lineTo(line.secondPoint.x!, line.secondPoint.y!)
+        this.ctx?.stroke()    
+    }
+    
+    drawCircle(point: Point){
+        this.ctx?.beginPath()
+        this.ctx?.arc(point.x!, point.y!, 5, 0, Math.PI * 2, true)
+        this.ctx!.fillStyle = 'red'
+        this.ctx?.fill()
+    }
+
     drawAll(lines: Line[]){
         for (let i = 0; i < lines.length; i++) {
-            this.ctx?.beginPath()
-            this.ctx?.moveTo(lines[i].firstPoint.x!, lines[i].firstPoint.y!)
-            this.ctx?.lineTo(lines[i].secondPoint.x!, lines[i].secondPoint.y!)
-            this.ctx?.stroke()    
+            this.drawLine(lines[i])   
             for (let j = 0; j < this.lines.length; j++) {
                 let inetrsactionPoint = this.findIntersectionPoints(lines[i], this.lines[j])
                 if (inetrsactionPoint) {
-                    this.ctx?.beginPath()
-                    this.ctx?.arc(inetrsactionPoint.x!, inetrsactionPoint.y!, 5, 0, Math.PI * 2, true)
-                    this.ctx!.fillStyle = 'red'
-                    this.ctx?.fill()
+                    this.drawCircle(inetrsactionPoint)
                 }
             }
         }  
