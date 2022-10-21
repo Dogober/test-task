@@ -99,14 +99,7 @@ export class CanvasState {
             this.drawAll(this.lines)
         }, 20)    
     }
-
-    drawCircle(point: Point){
-        this.ctx?.beginPath()
-        this.ctx?.arc(point.x!, point.y!, 5, 0, Math.PI * 2, true)
-        this.ctx!.fillStyle = 'red'
-        this.ctx?.fill()
-    }
-
+    
     drawAll(lines: Line[]){
         for (let i = 0; i < lines.length; i++) {
             lines[i].draw(this.canvas!)
