@@ -1,23 +1,14 @@
 import { makeAutoObservable } from "mobx";
-
-type canvas = HTMLCanvasElement | null
+import { Line, Point } from "../models/Line";
 
 enum LineDrawingState {
     DRAWING_FIRST_POINT,
     DRAWING_SECOND_POINT
 }
-interface Line {
-    firstPoint: Point;
-    secondPoint: Point;
-}
-interface Point {
-    x?: number;
-    y?: number;
-}
 
 export class CanvasState {
 
-    canvas?: canvas
+    canvas?: HTMLCanvasElement | null
     ctx?: CanvasRenderingContext2D | null
     firstX?: number;
     firstY?: number;
@@ -31,7 +22,7 @@ export class CanvasState {
         makeAutoObservable(this)
     }
 
-    setCanvas(canvas: canvas){
+    setCanvas(canvas: HTMLCanvasElement | null){
         this.canvas = canvas
         this.ctx = canvas?.getContext('2d')
     }
@@ -51,17 +42,11 @@ export class CanvasState {
             this.ctx?.clearRect(0, 0, this.canvas?.clientWidth!, this.canvas?.clientHeight!)
             this.lines.pop()
             for (let i = 0; i < this.lines.length; i++) {
-                this.ctx?.beginPath()
-                this.ctx?.moveTo(this.lines[i].firstPoint.x!, this.lines[i].firstPoint.y!)
-                this.ctx?.lineTo(this.lines[i].secondPoint.x!, this.lines[i].secondPoint.y!)
-                this.ctx?.stroke()
+                this.drawLine(this.lines[i])
                 for (let j = 0; j < this.lines.length; j++) {
                     let inetrsactionPoint = this.findIntersectionPoints(this.lines[i], this.lines[j])
                     if (inetrsactionPoint) {
-                        this.ctx?.beginPath()
-                        this.ctx?.arc(inetrsactionPoint?.x!, inetrsactionPoint?.y!, 5, 0, Math.PI * 2, true)
-                        this.ctx!.fillStyle = 'red'
-                        this.ctx?.fill()         
+                        this.drawCircle(inetrsactionPoint)        
                     }
                 }
             }  
@@ -101,32 +86,14 @@ export class CanvasState {
                 this.lines[this.lines.length-1] = lastLineDrawn
             }
             for (let i = 0; i < this.lines.length; i++) {
-                this.ctx?.beginPath()
-                this.ctx?.moveTo(this.lines[i].firstPoint.x!, this.lines[i].firstPoint.y!)
-                this.ctx?.lineTo(this.lines[i].secondPoint.x!, this.lines[i].secondPoint.y!)
-                this.ctx?.stroke()
+                this.drawLine(this.lines[i])
                 for (let j = 0; j < this.lines.length; j++) {
                     let inetrsactionPoint = this.findIntersectionPoints(this.lines[i], this.lines[j])
                     if (inetrsactionPoint) {
-                        this.ctx?.beginPath()
-                        this.ctx?.arc(inetrsactionPoint?.x!, inetrsactionPoint?.y!, 5, 0, Math.PI * 2, true)
-                        this.ctx!.fillStyle = 'red'
-                        this.ctx?.fill()         
+                        this.drawCircle(inetrsactionPoint)        
                     }
                 }
             }  
-        }
-    }
-    findIntersectionPoints(drawnLine: Line, lastLineDrawn: Line): Point | undefined{
-        let divisor = ((lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)-(lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
-        let factorA = ((lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
-        let factorB = ((drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
-        let circlePoints: Point = {
-            x: Math.round(drawnLine.firstPoint.x!+factorA*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)),
-            y: Math.round(drawnLine.firstPoint.y!+factorA*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
-        }
-        if (factorA >= 0 && factorA <= 1 && factorB >= 0 && factorB <= 1) {
-            return circlePoints
         }
     }
     clearCanvas(){
@@ -143,10 +110,7 @@ export class CanvasState {
                 for (let j = 0; j < this.lines.length; j++) {
                     let inetrsactionPoint = this.findIntersectionPoints(this.lines[i], this.lines[j])
                     if (inetrsactionPoint) {
-                        this.ctx?.beginPath()
-                        this.ctx?.arc(inetrsactionPoint?.x!, inetrsactionPoint?.y!, 5, 0, Math.PI * 2, true)
-                        this.ctx!.fillStyle = 'red'
-                        this.ctx?.fill()         
+                        this.drawCircle(inetrsactionPoint)         
                     }
                 }
             }
@@ -158,18 +122,45 @@ export class CanvasState {
         const animationTick = 30
         const animationDuration = 3000
         const count = animationDuration/animationTick
-        let xFirstAnimation = line.firstPoint.x!-deltaX/(2*count) 
-        let xSecondAnimation = line.secondPoint.x!+deltaX/(2*count)
-        let yFirstAnimation = line.firstPoint.y!-deltaY/(2*count)
-        let ySecondAnimation = line.secondPoint.y!+deltaY/(2*count)
-        line.firstPoint.x = xFirstAnimation
-        line.secondPoint.x = xSecondAnimation
-        line.firstPoint.y = yFirstAnimation
-        line.secondPoint.y = ySecondAnimation
+        let animatedline: Line = {
+            firstPoint: {
+                x: line.firstPoint.x!-deltaX/(2*count),
+                y: line.firstPoint.y!-deltaY/(2*count)    
+            },
+            secondPoint: {
+                x: line.secondPoint.x!+deltaX/(2*count),
+                y: line.secondPoint.y!+deltaY/(2*count)    
+            }
+        }
+        line.firstPoint.x = animatedline.firstPoint.x
+        line.firstPoint.y = animatedline.firstPoint.y
+        line.secondPoint.x = animatedline.secondPoint.x
+        line.secondPoint.y = animatedline.secondPoint.y
+        this.drawLine(animatedline)
+    }
+    drawLine(line: Line){
         this.ctx?.beginPath()
-        this.ctx?.moveTo(xFirstAnimation, yFirstAnimation)
-        this.ctx?.lineTo(xSecondAnimation, ySecondAnimation)
+        this.ctx?.moveTo(line.firstPoint.x!, line.firstPoint.y!)
+        this.ctx?.lineTo(line.secondPoint.x!, line.secondPoint.y!)
         this.ctx?.stroke()
+    }
+    drawCircle(point: Point){
+        this.ctx?.beginPath()
+        this.ctx?.arc(point.x!, point.y!, 5, 0, Math.PI * 2, true)
+        this.ctx!.fillStyle = 'red'
+        this.ctx?.fill()         
+    }
+    findIntersectionPoints(drawnLine: Line, lastLineDrawn: Line): Point | undefined{
+        let divisor = ((lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)-(lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
+        let factorA = ((lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
+        let factorB = ((drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
+        let circlePoint: Point = {
+            x: Math.round(drawnLine.firstPoint.x!+factorA*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)),
+            y: Math.round(drawnLine.firstPoint.y!+factorA*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
+        }
+        if (factorA >= 0 && factorA <= 1 && factorB >= 0 && factorB <= 1) {
+            return circlePoint
+        }
     }
 }
 export default new CanvasState()
