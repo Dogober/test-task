@@ -2,6 +2,8 @@ import { makeAutoObservable } from "mobx";
 import { Point } from "../models/Point";
 import { Line } from "../models/Line";
 import { Circle } from "../models/Circle";
+import { decreasedLine } from "../helpers.ts/decreasedLine";
+import { findIntersectionPoint } from "../helpers.ts/findIntersectionPoint";
 
 enum LineDrawingState {
     DRAWING_FIRST_POINT,
@@ -19,8 +21,6 @@ export class CanvasState {
     drawingState = LineDrawingState.DRAWING_FIRST_POINT
     lines: Line[] = []
     lineAdded: boolean = false
-    animationDuration = 3000
-
 
     constructor(){
         makeAutoObservable(this)
@@ -90,45 +90,28 @@ export class CanvasState {
             this.ctx?.clearRect(0, 0, this.canvas?.clientWidth!, this.canvas?.clientHeight!)
             this.lines = []   
             console.log('Stop')
-        }, this.animationDuration)
+        }, 3000)
         const intervalId = setInterval(() => {
             this.ctx?.clearRect(0, 0, this.canvas?.clientWidth!, this.canvas?.clientHeight!)    
             for (let i = 0; i < this.lines.length; i++) {
-                this.lines[i] = this.decreasedLine(this.lines[i])
+                this.lines[i] = decreasedLine(this.lines[i])
             }
             this.drawAll(this.lines)
         }, 20)    
     }
 
-    decreasedLine(line: Line): Line{
-        let deltaX = Math.round(line.firstPoint.x!-line.secondPoint.x!)
-        let deltaY = Math.round(line.firstPoint.y!-line.secondPoint.y!)
-        const animationTick = 100
-        const count = this.animationDuration/animationTick
-        let decreasedLine = new Line(
-            {x: line.firstPoint.x! - deltaX / (2 * count), y: line.firstPoint.y! - deltaY / (2 * count)},
-            {x: line.secondPoint.x! + deltaX / (2 * count), y: line.secondPoint.y! + deltaY / (2 * count)})
-        return decreasedLine
-    }
-    
-    findIntersectionPoint(drawnLine: Line, lastLineDrawn: Line): Point | undefined{
-        let divisor = ((lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)-(lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
-        let factorA = ((lastLineDrawn.secondPoint.x!-lastLineDrawn.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(lastLineDrawn.secondPoint.y!-lastLineDrawn.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
-        let factorB = ((drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)*(drawnLine.firstPoint.y!-lastLineDrawn.firstPoint.y!)-(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!)*(drawnLine.firstPoint.x!-lastLineDrawn.firstPoint.x!))/divisor
-        let point: Point = {
-            x: Math.round(drawnLine.firstPoint.x!+factorA*(drawnLine.secondPoint.x!-drawnLine.firstPoint.x!)),
-            y: Math.round(drawnLine.firstPoint.y!+factorA*(drawnLine.secondPoint.y!-drawnLine.firstPoint.y!))
-        }
-        if (factorA >= 0 && factorA <= 1 && factorB >= 0 && factorB <= 1) {
-            return point
-        }
+    drawCircle(point: Point){
+        this.ctx?.beginPath()
+        this.ctx?.arc(point.x!, point.y!, 5, 0, Math.PI * 2, true)
+        this.ctx!.fillStyle = 'red'
+        this.ctx?.fill()
     }
 
     drawAll(lines: Line[]){
         for (let i = 0; i < lines.length; i++) {
             lines[i].draw(this.canvas!)
             for (let j = 0; j < this.lines.length; j++) {
-                let inetrsactionPoint = this.findIntersectionPoint(lines[i], this.lines[j])
+                let inetrsactionPoint = findIntersectionPoint(lines[i], this.lines[j])
                 if (inetrsactionPoint) {
                     let circle = new Circle(inetrsactionPoint)
                     circle.draw(this.canvas!)
