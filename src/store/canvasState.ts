@@ -1,5 +1,4 @@
 import { makeAutoObservable } from "mobx";
-import { Point } from "../models/Point";
 import { Line } from "../models/Line";
 import { Circle } from "../models/Circle";
 import { decreasedLine } from "../helpers.ts/decreasedLine";
@@ -99,7 +98,7 @@ export class CanvasState {
             this.drawAll(this.lines)
         }, 20)    
     }
-    
+
     drawAll(lines: Line[]){
         for (let i = 0; i < lines.length; i++) {
             lines[i].draw(this.canvas!)
