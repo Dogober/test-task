@@ -2,7 +2,8 @@ import { makeAutoObservable } from "mobx";
 import { Line } from "../models/Line";
 import { Circle } from "../models/Circle";
 import { decreasedLine } from "../helpers.ts/decreasedLine";
-import { findIntersectionPoint } from "../helpers.ts/findIntersectionPoint";
+import { findAllIntersections } from "../helpers.ts/findAllIntersections";
+import { Drawable } from "../models/Drawable";
 
 enum LineDrawingState {
     DRAWING_FIRST_POINT,
@@ -47,7 +48,7 @@ export class CanvasState {
             this.lineAdded = false
             this.ctx?.clearRect(0, 0, this.canvas?.clientWidth!, this.canvas?.clientHeight!)
             this.lines.pop()
-            this.drawAll(this.lines)
+            this.draw(this.lines)
         }
     }
 
@@ -79,11 +80,11 @@ export class CanvasState {
             } else {
                 this.lines[this.lines.length-1] = lastLineDrawn
             }
-            this.drawAll(this.lines)
+            this.draw(this.lines)
         }
     }
 
-    collapseLines(){
+    collapseLines() {
         setTimeout(() => {
             clearInterval(intervalId)
             this.ctx?.clearRect(0, 0, this.canvas?.clientWidth!, this.canvas?.clientHeight!)
@@ -95,21 +96,21 @@ export class CanvasState {
             for (let i = 0; i < this.lines.length; i++) {
                 this.lines[i] = decreasedLine(this.lines[i])
             }
-            this.drawAll(this.lines)
+            this.draw(this.lines)
         }, 20)    
     }
 
-    drawAll(lines: Line[]){
-        for (let i = 0; i < lines.length; i++) {
-            lines[i].draw(this.canvas!)
-            for (let j = 0; j < this.lines.length; j++) {
-                let inetrsactionPoint = findIntersectionPoint(lines[i], this.lines[j])
-                if (inetrsactionPoint) {
-                    let circle = new Circle(inetrsactionPoint)
-                    circle.draw(this.canvas!)
-                }
-            }
-        }  
+    draw(lines: Line[]) {
+        let circles = findAllIntersections(lines).map((point) => new Circle(point))
+        let drawables: Drawable[] = []
+        drawables = drawables.concat(lines).concat(circles)
+        this.drawAll(drawables)
+    }
+
+    drawAll(drawables: Drawable[]) {
+        for (let i = 0; i < drawables.length; i++) {
+            drawables[i].draw(this.canvas!)
+        }
     }
 }
 

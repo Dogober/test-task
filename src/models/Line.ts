@@ -11,8 +11,8 @@ export class Line implements Drawable{
     draw(canvas: HTMLCanvasElement | null): void {
         const ctx = canvas?.getContext('2d')
         ctx?.beginPath()
-        ctx?.moveTo(this.firstPoint.x!, this.firstPoint.y!)
-        ctx?.lineTo(this.secondPoint.x!, this.secondPoint.y!)
+        ctx?.moveTo(this.firstPoint.x, this.firstPoint.y)
+        ctx?.lineTo(this.secondPoint.x, this.secondPoint.y)
         ctx?.stroke()    
     }
 }
