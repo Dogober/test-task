@@ -20,7 +20,7 @@ export class CanvasState {
     secondY?: number;
     drawingState = LineDrawingState.DRAWING_FIRST_POINT
     lines: Line[] = []
-    lineAdded: boolean = false
+    linePushed: boolean = false
 
     constructor(){
         makeAutoObservable(this)
@@ -45,7 +45,7 @@ export class CanvasState {
     mouseDownHandler(event: MouseEvent){
         if (event.button === 2 && this.drawingState === LineDrawingState.DRAWING_SECOND_POINT) {
             this.drawingState = LineDrawingState.DRAWING_FIRST_POINT
-            this.lineAdded = false
+            this.linePushed = false
             this.ctx?.clearRect(0, 0, this.canvas?.clientWidth!, this.canvas?.clientHeight!)
             this.lines.pop()
             this.draw(this.lines)
@@ -60,7 +60,7 @@ export class CanvasState {
             this.firstY = event.pageY - canvasEvent.offsetTop
         } else if(this.drawingState === LineDrawingState.DRAWING_SECOND_POINT){
             this.drawingState = LineDrawingState.DRAWING_FIRST_POINT
-            this.lineAdded = false
+            this.linePushed = false
         }
     }
 
@@ -74,9 +74,9 @@ export class CanvasState {
                 {x: this.firstX!, y: this.firstY!}, 
                 {x: this.secondX, y: this.secondY})
 
-            if (!this.lineAdded) {
+            if (!this.linePushed) {
                 this.lines.push(lastLineDrawn)
-                this.lineAdded = true
+                this.linePushed = true
             } else {
                 this.lines[this.lines.length-1] = lastLineDrawn
             }
